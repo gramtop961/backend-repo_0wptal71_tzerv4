@@ -12,9 +12,36 @@ Model name is converted to lowercase for the collection name:
 """
 
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List, Literal
+from datetime import datetime
 
-# Example schemas (replace with your own):
+# CRM-specific schemas
+
+class Automation(BaseModel):
+    """
+    Automations configured in the CRM
+    Collection name: "automation"
+    """
+    name: str = Field(..., description="Automation name")
+    description: Optional[str] = Field(None, description="What this automation does")
+    status: Literal["active", "paused"] = Field("active", description="Whether automation is active")
+    trigger: Literal["schedule", "webhook", "event"] = Field("schedule", description="How it is triggered")
+    frequency: Optional[str] = Field(None, description="For schedule: e.g., hourly, daily 9am")
+
+class AutomationRun(BaseModel):
+    """
+    Historical execution runs of automations
+    Collection name: "automationrun"
+    """
+    automation_id: str = Field(..., description="Reference to Automation _id as string")
+    status: Literal["success", "failed", "running"] = Field("running")
+    started_at: Optional[datetime] = None
+    finished_at: Optional[datetime] = None
+    processed: int = 0
+    errors: int = 0
+    notes: Optional[str] = None
+
+# Example schemas (kept for reference):
 
 class User(BaseModel):
     """
@@ -37,12 +64,3 @@ class Product(BaseModel):
     price: float = Field(..., ge=0, description="Price in dollars")
     category: str = Field(..., description="Product category")
     in_stock: bool = Field(True, description="Whether product is in stock")
-
-# Add your own schemas here:
-# --------------------------------------------------
-
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
